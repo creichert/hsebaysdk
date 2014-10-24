@@ -328,11 +328,11 @@ findVerbToOperation fb = case fb of
     FindItemsByKeywords -> "findItemsByKeywords"
     FindCompletedItems  -> "findCompletedItems"
     FindItemsAdvanced   -> "findItemsAdvanced"
-    _ -> error "Error"
+    _ -> error "Unsupported find verb to text operation."
 
 findVerbToTns :: FindVerb -> Text
 findVerbToTns fb = case fb of
     FindItemsByKeywords -> "findItemsByKeywordsRequest"
     FindCompletedItems  -> "findCompletedItemsRequest"
     FindItemsAdvanced   -> "findItemsAdvancedRequest"
-    _ -> error "Error"
+    _ -> error "Unsupported find verb to tns operation."
