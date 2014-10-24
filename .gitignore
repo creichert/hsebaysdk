@@ -1,0 +1,14 @@
+*~
+*.swp
+*.swn
+*.xml
+.cabal-sandbox/
+cabal.sandbox.config
+dist/
+codex.tags
+*.swo
+*.aes
+*.db
+*.db-journal
+*.keter
+*.env
