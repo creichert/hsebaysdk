@@ -11,7 +11,8 @@ averageCurrentPrice :: Maybe SearchResponse -> Double
 averageCurrentPrice sr = case sr of
     Nothing -> 0.0
     Just (SearchResponse _ SearchResult{..}) ->
-        let f Item{..} = (+) itemCurrentPrice
+        let price SellingStatus{..} = sellingStatusConvertedCurrentPrice
+            f SearchItem{..} = (+) (price searchItemSellingStatus)
             total = foldr f 0.0 searchResultItems
         in total / fromIntegral (length searchResultItems)
 
