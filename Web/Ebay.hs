@@ -17,6 +17,8 @@ module Web.Ebay
     , ItemFilter (..)
     , Condition (..)
     , ListingInfo (..)
+    , OutputSelector (..)
+    , GalleryInfo (..)
     ) where
 
 import           Control.Applicative          (pure, (<$>), (<*>))
@@ -91,9 +93,24 @@ instance ToJSON ItemFilter where
                                              , "value" .= val
                                              ]
 
+data OutputSelector = AspectHistogram
+                    | CategoryHistogram
+                    | ConditionHistogram
+                    | GalleryInfoOutput
+                    | PictureURLLarge
+                    | PictureURLSuperSize
+                    | SellerInfo
+                    | StoreInfo
+                    | UnitPriceInfo
+                    deriving (Generic, Read, Show)
+
+instance ToJSON OutputSelector
+instance FromJSON OutputSelector
+
 -- | Generic search query for ebay api.
 data Search = Search
             { searchKeywords   :: Text
+            , searchOutputSelector :: Maybe OutputSelector
             -- , searchAffiliateInfo :: AffiliateInfo
             , searchSortOrder  :: Maybe SortOrder
             , searchItemFilter :: [ItemFilter]
@@ -105,12 +122,15 @@ instance ToJSON Search where
                                  -- , "paginationInput"
                                  ] ++ order searchSortOrder
                                    ++ ifilter searchItemFilter
+                                   ++ oselector searchOutputSelector
       where order (Just so) = ["sortOrder" .= so]
             order Nothing = []
             -- item filter field should not be
             -- added if the list is empty.
             ifilter [] = []
             ifilter sif = [ "itemFilter" .=  sif ]
+            oselector Nothing = []
+            oselector (Just os) = [ "outputSelector" .= os ]
 
 data SortOrder = EndTimeSoonest
                | BestMatch
@@ -189,6 +209,7 @@ data SearchItem = SearchItem
     , searchItemSubtitle              :: Maybe Text
     , searchItemTopRatedListing       :: Bool
     , searchItemViewItemUrl           :: Text
+    -- , searchItemGalleryInfo           :: Maybe GalleryInfo
     , searchItemGalleryUrl            :: Text
     , searchItemGalleryPlusPictureUrl :: Maybe Text
     , searchItemPictureLargeUrl       :: Maybe Text
@@ -202,6 +223,10 @@ data SearchItem = SearchItem
     -- , searchItemSellerInfo :: SellerInfo
     } deriving Show
 
+data GalleryInfo = GalleryInfo
+    { galleryInfoUrls :: [Text]
+    } deriving Show
+
 -- TODO: Cleanup parsing
 instance FromJSON SearchItem where
     parseJSON (Object o) =
@@ -212,6 +237,7 @@ instance FromJSON SearchItem where
              <*> (o .:> "topRatedListing"
                      >>= return . txtIsTrue)
              <*> o .:> "viewItemURL"
+             -- <*> (o .:?> "galleryInfo")
              <*> o .:> "galleryURL"
              <*> o .:?> "galleryPlusPictureURL"
              <*> o .:?> "pictureURLLarge"

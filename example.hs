@@ -35,7 +35,7 @@ main = do
     withManager $ \manager -> do
 
         -- Find items by keywords.
-        let search = Search keywords Nothing []
+        let search = Search keywords (Just PictureURLLarge) Nothing []
             searchRequest = SearchRequest FindItemsByKeywords search
 
         _ <- withSearchRequest searchRequest config manager handler
@@ -44,14 +44,14 @@ main = do
         let cFilter = [ ItemFilter ("Condition", condition)
                       , ItemFilter ("SoldItemsOnly", "true")
                       ]
-            csearch = Search keywords (Just EndTimeSoonest) cFilter
+            csearch = Search keywords Nothing (Just EndTimeSoonest) cFilter
             completedSearch = SearchRequest FindCompletedItems csearch
 
         _ <- withSearchRequest completedSearch config manager handler
 
         -- Find items which are still ongoing but closest to their end time.
         let onFilter = [ ItemFilter ("Condition", condition) ]
-            search4 = Search keywords (Just EndTimeSoonest) onFilter
+            search4 = Search keywords Nothing (Just EndTimeSoonest) onFilter
             searchRequest4 = SearchRequest FindItemsAdvanced search4
 
         _ <- withSearchRequest searchRequest4 config manager handler
