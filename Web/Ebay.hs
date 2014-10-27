@@ -14,7 +14,9 @@ module Web.Ebay
     , FindVerb (..)
     , EbayConfig (..)
     , SellingState (..)
-    , ItemFilter(..)
+    , ItemFilter (..)
+    , Condition (..)
+    , ListingInfo (..)
     ) where
 
 import           Control.Applicative          (pure, (<$>), (<*>))
@@ -28,6 +30,7 @@ import           Data.Conduit                 (($$+-))
 import           Data.Conduit.Binary          (sinkLbs)
 import qualified Data.HashMap.Strict          as HM
 import           Data.Monoid                  ((<>))
+import           Data.Time                    (UTCTime)
 import           Data.Text                    (Text)
 import qualified Data.Text                    as T
 import qualified Data.Text.Encoding           as T
@@ -181,13 +184,22 @@ instance FromJSON SearchResult where
 -- This items is not a direct translation of the
 -- eBay type yet.
 data SearchItem = SearchItem
-    { searchItemId            :: Text
-    , searchItemTitle         :: Text
-    , searchItemSubtitle      :: Maybe Text
-    , searchItemViewItemUrl   :: Text
-    , searchItemGalleryUrl    :: Text
+    { searchItemId                    :: Text
+    , searchItemTitle                 :: Text
+    , searchItemSubtitle              :: Maybe Text
+    , searchItemTopRatedListing       :: Bool
+    , searchItemViewItemUrl           :: Text
+    , searchItemGalleryUrl            :: Text
+    , searchItemGalleryPlusPictureUrl :: Maybe Text
+    , searchItemPictureLargeUrl       :: Maybe Text
+    -- , searchItemPictureSuperSizeUrl :: Text
+    -- , searchItemPostalCode :: Text
+    -- , searchItemThumbnailUrl  :: Text
     , searchItemCondition     :: Condition
     , searchItemSellingStatus :: SellingStatus
+    , searchItemListingInfo   :: Maybe ListingInfo
+    -- , searchItemCategory :: Category
+    -- , searchItemSellerInfo :: SellerInfo
     } deriving Show
 
 -- TODO: Cleanup parsing
@@ -197,10 +209,63 @@ instance FromJSON SearchItem where
              <$> o .:> "itemId"
              <*> o .:> "title"
              <*> o .:?> "subtitle"
+             <*> (o .:> "topRatedListing"
+                     >>= return . txtIsTrue)
              <*> o .:> "viewItemURL"
              <*> o .:> "galleryURL"
+             <*> o .:?> "galleryPlusPictureURL"
+             <*> o .:?> "pictureURLLarge"
              <*> o .:> "condition"
              <*> o .:> "sellingStatus"
+             <*> o .:?> "listingInfo"
+      where txtIsTrue btxt = btxt == ("True" :: Text) || btxt == "False"
+    parseJSON _ = mzero
+
+data ListingType = Auction
+                 | AdFormat
+                 | AuctionWithBIN
+                 | Classified
+                 | FixedPrice
+                 | StoreInventory
+                 deriving (Generic, Read, Show)
+
+instance FromJSON ListingType
+
+data ListingInfo = ListingInfo
+    { listingInfoBestOfferEnabled :: Bool
+    , listingInfoBuyItNowAvailable :: Bool
+    , listingInfoBuyItNowPrice :: Maybe Text -- Double
+    , listingInfoConvertedBuyItNowPrice :: Maybe Text -- Double
+    , listingInfoEndTime :: UTCTime
+    , listingInfoGift :: Bool
+    , listingInfoType :: ListingType
+    , listingInfoStartTime :: UTCTime
+    } deriving Show
+
+instance FromJSON ListingInfo where
+    parseJSON (Object o) =
+        ListingInfo
+             <$> (o .:> "bestOfferEnabled"
+                        >>= return . (== ("true" :: Text)))
+             <*> (o .:> "buyItNowAvailable"
+                        >>= return . (== ("true" :: Text)))
+             <*> (o .:?> "buyItNowPrice" >>= \mbin ->
+                      case mbin of
+                          Nothing -> return Nothing
+                          Just bin -> bin .: "__value__")
+                                      -- TODO some values not parsing
+                                      -- >>= return . read . T.unpack)
+             <*> (o .:?> "convertedBuyItNowPrice" >>= \mcbin ->
+                      case mcbin of
+                        Nothing -> return Nothing
+                        Just cbin -> cbin .: "__value__")
+                                      -- TODO some values not parsing
+                                      --  >>= return . read . T.unpack)
+             <*> o .:> "endTime"
+             <*> (o .:> "gift"
+                        >>= return . (== ("true" :: Text)))
+             <*> o .:> "listingType"
+             <*> o .:> "startTime"
     parseJSON _ = mzero
 
 data SellingStatus = SellingStatus
