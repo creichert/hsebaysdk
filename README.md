@@ -2,6 +2,11 @@
 
 A Haskell programming interface to the eBay API.
 
+***The api of this package is still undergoing changes and
+   improvements and is subject to change.***
+
+***Currently, this repository only supports the Finding api.***
+
 [![Build Status](https://secure.travis-ci.org/creichert/hsebaysdk.png?branch=master)](http://travis-ci.org/creichert/hsebaysdk)
 
 # Getting Started
@@ -16,5 +21,3 @@ Running the example from GHCi:
     > :l example.hs
     > main
 ```
-
-***Currently, this repository only supports the Finding api.***
