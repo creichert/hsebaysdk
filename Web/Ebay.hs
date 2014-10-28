@@ -210,7 +210,7 @@ data SearchItem = SearchItem
     , searchItemTopRatedListing       :: Bool
     , searchItemViewItemUrl           :: Text
     -- , searchItemGalleryInfo           :: Maybe GalleryInfo
-    , searchItemGalleryUrl            :: Text
+    , searchItemGalleryUrl            :: Maybe Text
     , searchItemGalleryPlusPictureUrl :: Maybe Text
     , searchItemPictureLargeUrl       :: Maybe Text
     -- , searchItemPictureSuperSizeUrl :: Text
@@ -238,7 +238,7 @@ instance FromJSON SearchItem where
                      >>= return . txtIsTrue)
              <*> o .:> "viewItemURL"
              -- <*> (o .:?> "galleryInfo")
-             <*> o .:> "galleryURL"
+             <*> o .:?> "galleryURL"
              <*> o .:?> "galleryPlusPictureURL"
              <*> o .:?> "pictureURLLarge"
              <*> o .:> "condition"
