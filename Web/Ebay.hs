@@ -19,6 +19,7 @@ module Web.Ebay
     , ListingInfo (..)
     , OutputSelector (..)
     , GalleryInfo (..)
+    , AffiliateInfo(..)
     ) where
 
 import           Control.Applicative          (pure, (<$>), (<*>))
@@ -111,18 +112,18 @@ instance FromJSON OutputSelector
 data Search = Search
             { searchKeywords   :: Text
             , searchOutputSelector :: Maybe OutputSelector
-            -- , searchAffiliateInfo :: AffiliateInfo
             , searchSortOrder  :: Maybe SortOrder
             , searchItemFilter :: [ItemFilter]
+            , searchAffiliateInfo :: Maybe AffiliateInfo
             } deriving Show
 
 instance ToJSON Search where
     toJSON Search{..} = object $ [ "keywords"  .= searchKeywords
-                                 -- , "affiliate" .=
                                  -- , "paginationInput"
                                  ] ++ order searchSortOrder
                                    ++ ifilter searchItemFilter
                                    ++ oselector searchOutputSelector
+                                   ++ affiliate searchAffiliateInfo
       where order (Just so) = ["sortOrder" .= so]
             order Nothing = []
             -- item filter field should not be
@@ -131,6 +132,39 @@ instance ToJSON Search where
             ifilter sif = [ "itemFilter" .=  sif ]
             oselector Nothing = []
             oselector (Just os) = [ "outputSelector" .= os ]
+            affiliate Nothing = []
+            affiliate (Just a) = [ "affiliate" .= a ]
+
+data AffiliateInfo = AffiliateInfo
+    { networkId :: Int
+    -- ^ The networkId specifies the third party who is your tracking
+    --   partner. When specifying affiliate details, this field is
+    --   required. Not all partners are valid for all sites.
+
+    , trackingId :: Int
+    -- ^ The trackingId specifies an ID to identify you to your
+    --   tracking partner. The value you specify is obtained from
+    --   your tracking partner. For eBay Partner Network, the
+    --   trackingId is the Campaign ID ("campid") provided by eBay
+    --   Partner Network. A Campaign ID is a 10-digit, unique number
+    --   to be used for associating traffic. A Campaign ID is valid
+    --   across all programs to which you have been accepted.
+
+    , customId :: Maybe Int
+    -- ^ The customId need not be specified. You can define a customId
+    --   (up to 256 characters) if you want to leverage it to better
+    --   monitor your marketing efforts. If you are using the eBay Partner
+    --   Network, and you provide a customId, it will be contained in the
+    --   tracking URL returned by eBay Partner Network.
+
+    } deriving Show
+
+instance ToJSON AffiliateInfo where
+    toJSON AffiliateInfo{..} =
+        object [ "trackingId" .= trackingId
+               , "networkId" .= networkId
+               , "customId" .= customId
+               ]
 
 data SortOrder = EndTimeSoonest
                | BestMatch

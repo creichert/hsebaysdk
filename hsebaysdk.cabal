@@ -16,6 +16,11 @@ description:
 
     See the git repository for example usages.
 
+    WARNING:
+
+    The api of this package is still undergoing
+    major changes and improvements and is subject to change.
+
 library
   exposed-modules:     Web.Ebay
   default-language:    Haskell2010
@@ -29,8 +34,8 @@ library
                 , http-conduit         >=2.1  && <2.2
                 , http-types           >=0.8  && <1.0
                 , resourcet            >=1.1  && <1.4
-                , text                 >=1.1  && <1.2
-                , time                 >= 1.4.2
+                , text                 >=1.1  && <1.3
+                , time                 == 1.4.*
                 , transformers         >=0.3  && <0.4
                 , unordered-containers >=0.2  && <0.3
 
