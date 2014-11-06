@@ -1,0 +1,27 @@
+* Haskell eBay SDK
+
+[[https://travis-ci.org/creichert/hsebaysdk][https://travis-ci.org/creichert/hsebaysdk.png?branch=master]]
+
+A Haskell programming interface to the eBay API.
+
+This api is being used by [[http://checkaflip.com][checkaflip]].
+
+/The api of this package is still undergoing changes and improvements
+   and is subject to change./
+
+* Getting Started
+
+See the [[https://github.com/creichert/hsebaysdk/blob/master/example.hs][example]] for more detailed usage.
+
+Running the example from GHCi:
+
+#+BEGIN_SRC haskell
+    cabal repl
+#+END_SRC
+
+#+BEGIN_SRC haskell
+    > :l example.hs
+    > main
+#+END_SRC
+
+/Currently, this module only supports the Finding api./
