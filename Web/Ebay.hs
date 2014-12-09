@@ -5,8 +5,8 @@
 {-# LANGUAGE RecordWildCards   #-}
 
 module Web.Ebay
-    ( defaultEbayConfig
-    , withSearchRequest
+    (
+      searchWithVerb
     , Search (..)
     , SearchRequest (..)
     , SearchResponse (..)
@@ -41,7 +41,6 @@ import           Data.Text                    (Text)
 import qualified Data.Text                    as T
 import qualified Data.Text.Encoding           as T
 import           GHC.Generics                 (Generic)
--- import           Network.HTTP.Conduit         (Manager, Request (..), RequestBody (..))
 import           Network.HTTP.Conduit         as HTTP
 import           Network.HTTP.Types           as HTTP (Header)
 
@@ -394,24 +393,19 @@ data FindVerb = FindCompletedItems -- Retrieves items whose listings
               | GetVersion
               deriving Show
 
------------------------------------------------------------------------
 
-withSearchRequest :: (MonadResource m, MonadIO m)
-                  => SearchRequest
-                  -> EbayConfig
-                  -> Manager
-                  -- TODO: Use Either Text SearchResponse
-                  -> (Maybe SearchResponse -> m b) -> m b
-withSearchRequest (SearchRequest cmd search) cfg manager f =
-    runCommand cmd search cfg manager >>= f
+------------------------------------------------------------------------------
 
-runCommand :: (MonadIO m, MonadResource m)
-           => FindVerb
-           -> Search
-           -> EbayConfig
-           -> Manager
-           -> m (Maybe SearchResponse)
-runCommand cmd search cfg@EbayConfig{..} manager = do
+
+-- | Runs an eBay Finding API search
+searchWithVerb :: (MonadIO m, MonadResource m)
+               => FindVerb -- action to run
+               -> Search -- search request
+               -> EbayConfig -- api configuration
+               -> Manager -- http connection manager
+               -> m (Maybe SearchResponse)
+
+searchWithVerb cmd search cfg@EbayConfig{..} manager = do
 
     let proto = if ebHttps then "https://" else "http://"
     initreq <- HTTP.parseUrl $ T.unpack $ proto <> ebDomain <> ebUri
