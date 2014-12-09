@@ -30,7 +30,7 @@ library
   build-depends:
                   base                 == 4.*
                 , aeson                >= 0.8
-                , bytestring           >= 0.10
+                , bytestring
                 , conduit              >= 1.1
                 , conduit-extra        >= 1.1
                 , http-conduit         >= 2.1
