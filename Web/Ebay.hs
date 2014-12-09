@@ -6,7 +6,11 @@
 
 module Web.Ebay
     (
+      -- ** Functions
       searchWithVerb
+    , defaultEbayConfig
+
+      -- ** Types
     , Search (..)
     , SearchRequest (..)
     , SearchResponse (..)
@@ -60,8 +64,8 @@ data EbayConfig = EbayConfig
       --
       -- defaults to False.
     , ebHttps            :: !Bool
- -- , ebWarnings         :: !Bool
- -- , ebErrors           :: !Bool
+      -- , ebWarnings         :: !Bool
+      -- , ebErrors           :: !Bool
 
       -- | EBay API Site Id.
       --
@@ -73,10 +77,10 @@ data EbayConfig = EbayConfig
 
       -- | Specify the request encoding.
     , ebRequestEncoding  :: !Encoding
- -- , ebProxy_host       :: !Text
- -- , ebProxy_port       :: !Text
- -- , ebToken            :: !Text
- -- , ebIaf_token        :: !Text
+      -- , ebProxy_host       :: !Text
+      -- , ebProxy_port       :: !Text
+      -- , ebToken            :: !Text
+      -- , ebIaf_token        :: !Text
 
       -- api key
     , ebAppId            :: !Text
@@ -94,10 +98,12 @@ data EbayConfig = EbayConfig
     , ebDebug            :: !Bool
     } deriving Show
 
+
 -- | Supported response encoding
 data Encoding = XmlEncoding
               | JsonEncoding
               deriving Show
+
 
 data SearchRequest = SearchRequest
     { verb    :: !FindVerb
@@ -116,12 +122,15 @@ instance ToJSON SearchRequest where
             xs    = "http://www.w3.org/2001/XMLSchema" :: Text
             nstns = "http://www.ebay.com/marketplace/search/v1/services" :: Text
 
+
 newtype ItemFilter = ItemFilter (Text, Text) deriving Show
 
+
 instance ToJSON ItemFilter where
-    toJSON (ItemFilter (name, val)) = object [ "name"  .= name
-                                             , "value" .= val
-                                             ]
+    toJSON (ItemFilter (name, val)) =
+        object [ "name"  .= name
+               , "value" .= val
+               ]
 
 data OutputSelector = AspectHistogram
                     | CategoryHistogram
@@ -134,8 +143,10 @@ data OutputSelector = AspectHistogram
                     | UnitPriceInfo
                     deriving (Generic, Read, Show)
 
+
 instance ToJSON OutputSelector
 instance FromJSON OutputSelector
+
 
 -- | Generic search query for ebay api.
 data Search = Search
@@ -145,6 +156,7 @@ data Search = Search
             , searchItemFilter     :: ![ItemFilter]
             , searchAffiliateInfo  :: Maybe AffiliateInfo
             } deriving Show
+
 
 instance ToJSON Search where
     toJSON Search{..} = object $ [ "keywords"  .= searchKeywords
@@ -163,6 +175,7 @@ instance ToJSON Search where
             oselector (Just os) = [ "outputSelector" .= os ]
             affiliate Nothing   = []
             affiliate (Just a)  = [ "affiliate" .= a ]
+
 
 data AffiliateInfo = AffiliateInfo
     { networkId  :: !Int
@@ -188,12 +201,14 @@ data AffiliateInfo = AffiliateInfo
 
     } deriving (Eq, Read, Show)
 
+
 instance ToJSON AffiliateInfo where
     toJSON AffiliateInfo{..} =
         object [ "trackingId" .= trackingId
                , "networkId"  .= networkId
                , "customId"   .= customId
                ]
+
 
 data SortOrder = EndTimeSoonest
                | BestMatch
@@ -208,6 +223,7 @@ data SortOrder = EndTimeSoonest
                | StartTimeNewest
                deriving (Show,  Generic)
 
+
 instance ToJSON SortOrder
 
 
@@ -218,6 +234,7 @@ instance ToJSON SortOrder
 --
 -- TODO: Parser (Maybe a) return type
 infixl 5 .:>, .:?>
+
 (.:>) :: FromJSON a => A.Object -> Text -> Parser a
 (.:>) obj key = head <$> obj .: key
 
@@ -226,11 +243,13 @@ infixl 5 .:>, .:?>
     ma <- obj .:? key
     return $ head <$> ma
 
+
 -- | Represents a Response from the eBay finding api
 --
 -- TODO: Search responses technically have a list of SearchResult
 data SearchResponse = SearchResponse FindVerb SearchResult
                     deriving Show
+
 
 -- use GADTs to get rid of this.
 instance FromJSON SearchResponse where
@@ -251,10 +270,12 @@ instance FromJSON SearchResponse where
         _ -> error $ "Response type not implemented: " ++ take 1000 (show o)
     parseJSON _ = mzero
 
+
 data SearchResult = SearchResult
     { searchResultCount :: Text
     , searchResultItems :: [SearchItem]
     } deriving Show
+
 
 instance FromJSON SearchResult where
     parseJSON (Object o) = do
@@ -262,6 +283,7 @@ instance FromJSON SearchResult where
         SearchResult <$> sr .: "@count"
                      <*> sr .: "item"
     parseJSON _ = mzero
+
 
 -- | A single ebay listing item
 --
@@ -287,9 +309,11 @@ data SearchItem = SearchItem
     -- , searchItemSellerInfo         :: SellerInfo
     } deriving Show
 
+
 data GalleryInfo = GalleryInfo
     { galleryInfoUrls :: ![Text]
     } deriving Show
+
 
 -- TODO: Cleanup parsing
 instance FromJSON SearchItem where
@@ -311,6 +335,7 @@ instance FromJSON SearchItem where
       where truetxt btxt = btxt == ("True" :: Text) || btxt == "False"
     parseJSON _ = mzero
 
+
 data ListingType = Auction
                  | AdFormat
                  | AuctionWithBIN
@@ -319,7 +344,9 @@ data ListingType = Auction
                  | StoreInventory
                  deriving (Generic, Read, Show)
 
+
 instance FromJSON ListingType
+
 
 data ListingInfo = ListingInfo
     { listingInfoBestOfferEnabled       :: !Bool
@@ -336,6 +363,7 @@ data ListingInfo = ListingInfo
     , listingInfoType                   :: ListingType
     , listingInfoStartTime              :: !UTCTime
     } deriving Show
+
 
 instance FromJSON ListingInfo where
     parseJSON (Object o) =
@@ -363,12 +391,14 @@ instance FromJSON ListingInfo where
              <*> o .:> "startTime"
     parseJSON _ = mzero
 
+
 data SellingStatus = SellingStatus
     { sellingStatusConvertedCurrentPrice :: !Double
     , sellingStatusCurrentPrice          :: !Double
     , sellingStatusBidCount              :: !(Maybe Text)
     , sellingStatusState                 :: SellingState
     } deriving Show
+
 
 instance FromJSON SellingStatus where
     parseJSON (Object o) = SellingStatus
@@ -382,6 +412,7 @@ instance FromJSON SellingStatus where
                         <*>  o .:> "sellingState"
     parseJSON _ = error "Unable to parse SellingStatus."
 
+
 data SellingState = Active
                   | Canceled
                   | Ended
@@ -391,15 +422,18 @@ data SellingState = Active
 
 instance FromJSON SellingState
 
+
 -- | Condition is made up of condition id
 -- condition display name
 data Condition = Condition Text Text deriving Show
+
 
 instance FromJSON Condition where
     parseJSON (Object o) = Condition
                         <$> o .:> "conditionId"
                         <*> o .:> "conditionDisplayName"
     parseJSON _ = error "Error parsing Condition."
+
 
 -- | Support verbs in finding api
 --
@@ -487,6 +521,7 @@ requestHeadersFromConfig fb EbayConfig{..} =
     utf8 = T.encodeUtf8
     dataFormatEncode JsonEncoding = utf8 "JSON"
     dataFormatEncode XmlEncoding  = utf8 "XML"
+
 
 -- | Convert the FindVerb to Text suitable for ebay request headers.
 findVerbToOperation :: FindVerb -> Bool -> Text
