@@ -48,23 +48,23 @@ import           Network.HTTP.Types           as HTTP (Header)
 
 -- | Ebay api configuration.
 data EbayConfig = EbayConfig
-    { domain           :: Text
-    , uri              :: Text
-    , https            :: Bool
- -- , warnings :: Bool
- -- , errors  :: Bool
-    , siteid           :: Text
-    , responseEncoding :: Encoding
-    , requestEncoding  :: Encoding
- -- , proxy_host :: Text
- -- , proxy_port :: Text
- -- , token :: Text
- -- , iaf_token :: Text
-    , appid            :: Text
-    , version          :: Text
-    , service          :: Text
-    , docUrl           :: Text
-    , debug            :: Bool
+    { ebDomain           :: Text
+    , ebUri              :: Text
+    , ebHttps            :: Bool
+ -- , ebWarnings :: Bool
+ -- , ebErrors  :: Bool
+    , ebSiteId           :: Text
+    , ebResponseEncoding :: Encoding
+    , ebRequestEncoding  :: Encoding
+ -- , ebProxy_host :: Text
+ -- , ebProxy_port :: Text
+ -- , ebToken :: Text
+ -- , ebIaf_token :: Text
+    , ebAppId            :: Text
+    , ebVersion          :: Text
+    , ebService          :: Text
+    , ebDocUrl           :: Text
+    , ebDebug            :: Bool
     } deriving Show
 
 -- | Supported response encoding
@@ -84,7 +84,7 @@ instance ToJSON SearchRequest where
                                       , "jsonns.tns" .= nstns
                                       , tns .= payload
                                       ]
-      where tns   = "tns." <> findVerbToTns verb
+      where tns   = "tns." <> findVerbToOperation verb True
             xsi   = "http://www.w3.org/2001/XMLSchema-instance" :: Text
             xs    = "http://www.w3.org/2001/XMLSchema" :: Text
             nstns = "http://www.ebay.com/marketplace/search/v1/services" :: Text
@@ -271,7 +271,7 @@ instance FromJSON SearchItem where
              <*> o .:> "title"
              <*> o .:?> "subtitle"
              <*> (o .:> "topRatedListing"
-                     >>= return . txtIsTrue)
+                     >>= return . truetxt)
              <*> o .:> "viewItemURL"
              -- <*> (o .:?> "galleryInfo")
              <*> o .:?> "galleryURL"
@@ -280,7 +280,7 @@ instance FromJSON SearchItem where
              <*> o .:> "condition"
              <*> o .:> "sellingStatus"
              <*> o .:?> "listingInfo"
-      where txtIsTrue btxt = btxt == ("True" :: Text) || btxt == "False"
+      where truetxt btxt = btxt == ("True" :: Text) || btxt == "False"
     parseJSON _ = mzero
 
 data ListingType = Auction
@@ -407,8 +407,8 @@ runCommand :: (MonadIO m, MonadResource m)
            -> m (Maybe SearchResponse)
 runCommand cmd search cfg@EbayConfig{..} manager = do
 
-    let proto = if https then "https://" else "http://"
-    initreq <- HTTP.parseUrl $ T.unpack $ proto <> domain <> uri
+    let proto = if ebHttps then "https://" else "http://"
+    initreq <- HTTP.parseUrl $ T.unpack $ proto <> ebDomain <> ebUri
 
     let verb    = cmd
         payload = search
@@ -427,44 +427,48 @@ runCommand cmd search cfg@EbayConfig{..} manager = do
 
 defaultEbayConfig :: EbayConfig
 defaultEbayConfig = EbayConfig
-    { domain = "svcs.ebay.com"
-    , uri = "/services/search/FindingService/v1"
-    , siteid = "EBAY-US"
-    , responseEncoding = JsonEncoding
-    , requestEncoding = JsonEncoding
-    , appid = ""
-    , version = "1.12.0"
-    , service = "FindingService"
-    , docUrl = "http://developer.ebay.com/DevZone/finding/CallRef/index.html"
-    , debug = False
-    , https = False
+    { ebDomain = "svcs.ebay.com"
+    , ebUri = "/services/search/FindingService/v1"
+    , ebSiteId = "EBAY-US"
+    , ebResponseEncoding = JsonEncoding
+    , ebRequestEncoding = JsonEncoding
+    , ebAppId = ""
+    , ebVersion = "1.12.0"
+    , ebService = "FindingService"
+    , ebDocUrl = "http://developer.ebay.com/DevZone/finding/CallRef/index.html"
+    , ebDebug = False
+    , ebHttps = False
     }
 
 requestHeadersFromConfig :: FindVerb -> EbayConfig -> [HTTP.Header]
 requestHeadersFromConfig fb EbayConfig{..} =
     [ ("Content-Type", "application/json")
-    , ("X-EBAY-SOA-SERVICE-NAME", utf8 service)
-    , ("X-EBAY-SOA-SERVICE-VERSION", utf8 version)
-    , ("X-EBAY-SOA-SECURITY-APPNAME", utf8 appid)
-    , ("X-EBAY-SOA-GLOBAL-ID", utf8 siteid)
-    , ("X-EBAY-SOA-OPERATION-NAME", T.encodeUtf8 (findVerbToOperation fb))
-    , ("X-EBAY-SOA-REQUEST-DATA-FORMAT",  dataFormatEncode requestEncoding)
-    , ("X-EBAY-SOA-RESPONSE-DATA-FORMAT", dataFormatEncode responseEncoding)
+    , ("X-EBAY-SOA-SERVICE-NAME", utf8 ebService)
+    , ("X-EBAY-SOA-SERVICE-VERSION", utf8 ebVersion)
+    , ("X-EBAY-SOA-SECURITY-APPNAME", utf8 ebAppId)
+    , ("X-EBAY-SOA-GLOBAL-ID", utf8 ebSiteId)
+    , ("X-EBAY-SOA-OPERATION-NAME", T.encodeUtf8 (findVerbToOperation fb False))
+    , ("X-EBAY-SOA-REQUEST-DATA-FORMAT",  dataFormatEncode ebRequestEncoding)
+    , ("X-EBAY-SOA-RESPONSE-DATA-FORMAT", dataFormatEncode ebResponseEncoding)
     ]
   where
     utf8 = T.encodeUtf8
     dataFormatEncode JsonEncoding = utf8 "JSON"
     dataFormatEncode XmlEncoding  = utf8 "XML"
 
--- TODO concat down to one function.
---
--- | X-EBAY-SOA-OPERATION-NAME
+-- | Convert the FindVerb to Text suitable for ebay request headers.
 findVerbToOperation :: FindVerb -> Bool -> Text
-findVerbToOperation fb request = op ++ req
+findVerbToOperation fb tns = op ++ req
   where
     op = case fb of
-          FindItemsByKeywords -> "findItemsByKeywords"
-          FindCompletedItems  -> "findCompletedItems"
-          FindItemsAdvanced   -> "findItemsAdvanced"
-          _ -> error "Unsupported find verb to text operation."
-    req = if request then "Request" else ""
+          FindItemsByKeywords             -> "findItemsByKeywords"
+          FindCompletedItems              -> "findCompletedItems"
+          FindItemsAdvanced               -> "findItemsAdvanced"
+          -- FindItemsByImage                -> "findFindItemsByImage"
+          -- FindItemsByKeywords             -> "findFindItemsByKeywords"
+          -- FindItemsByProduct              -> "findFindItemsByProduct"
+          -- FindItemsIneBayStores           -> "findFindItemsIneBayStores"
+          -- GetHistograms                   -> "findGetHistograms"
+          -- GetSearchKeywordsRecommendation -> "findGetSearchKeywordsRecommendation"
+          -- GetVersion                      -> "findGetVersion"
+    req = if tns then "Request" else ""
