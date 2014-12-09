@@ -57,7 +57,6 @@ import           Network.HTTP.Types           as HTTP (Header)
 data EbayConfig = EbayConfig
     {
       -- | ebay api domain configuration
-      --
       -- Sandbox: svcs.sandbox.ebay.com
       -- Production: svcs.ebay.com
       ebDomain           :: !Text
@@ -66,14 +65,12 @@ data EbayConfig = EbayConfig
     , ebUri              :: !Text
 
       -- | use https
-      --
       -- defaults to False.
     , ebHttps            :: !Bool
       -- , ebWarnings         :: !Bool
       -- , ebErrors           :: !Bool
 
       -- | EBay API Site Id.
-      --
       -- Default is `EBAY-US'.
     , ebSiteId           :: !Text
 
@@ -92,7 +89,6 @@ data EbayConfig = EbayConfig
     , ebVersion          :: !Text
 
       -- | eBay API service.
-      --
       -- Currently, this library only supports the
       -- Finding API and this value is always
       -- `FindingApi'
