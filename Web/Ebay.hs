@@ -10,7 +10,12 @@ module Web.Ebay
       searchWithVerb
     , defaultEbayConfig
 
-      -- ** Types
+      -- ** Ebay API types.
+      --
+      -- Most of these map directly to the eBay Finding API
+      -- Documentation at:
+      -- @http://developer.ebay.com/DevZone/finding/Concepts/FindingAPIGuide.html@
+
     , Search (..)
     , SearchRequest (..)
     , SearchResponse (..)
