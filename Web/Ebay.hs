@@ -41,12 +41,12 @@ import           Data.Text                    (Text)
 import qualified Data.Text                    as T
 import qualified Data.Text.Encoding           as T
 import           GHC.Generics                 (Generic)
-import           Network.HTTP.Conduit         (Manager, Request (..),
-                                               RequestBody (..), http, parseUrl,
-                                               responseBody)
+-- import           Network.HTTP.Conduit         (Manager, Request (..), RequestBody (..))
+import           Network.HTTP.Conduit         as HTTP
 import           Network.HTTP.Types           as HTTP (Header)
 
--- Ebay api configuration.
+
+-- | Ebay api configuration.
 --  * TODO: qualify names
 data EbayConfig = EbayConfig
                 { domain           :: Text
@@ -368,15 +368,18 @@ instance FromJSON Condition where
                         <$> o .:> "conditionId"
                         <*> o .:> "conditionDisplayName"
     parseJSON _ = error "Error parsing Condition."
+
 -- | Support verbs in finding api
 --
 -- 'verb' jargon taken from eBay docs.
-data FindVerb = FindCompletedItems -- * Retrieves items whose listings
-                                   --   are completed and are no longer
-                                   --   available for sale on eBay.
-              | FindItemsAdvanced -- * Finds items by a keyword query
-                                  --   and/or category and allows
-                                  --    searching within item descriptions.
+data FindVerb = FindCompletedItems -- Retrieves items whose listings
+                                   -- are completed and are no longer
+                                   -- available for sale on eBay.
+
+              | FindItemsAdvanced -- Finds items by a keyword query
+                                  -- and/or category and allows
+                                  -- searching within item descriptions.
+              | Find
               | FindItemsByImage
               | FindItemsByKeywords
               | FindItemsByProduct
@@ -406,7 +409,7 @@ runCommand :: (MonadIO m, MonadResource m)
 runCommand cmd search cfg@EbayConfig{..} manager = do
 
     let proto = if https then "https://" else "http://"
-    initreq <- parseUrl $ T.unpack $ proto <> domain <> uri
+    initreq <- HTTP.parseUrl $ T.unpack $ proto <> domain <> uri
 
     let verb    = cmd
         payload = search
@@ -419,8 +422,8 @@ runCommand cmd search cfg@EbayConfig{..} manager = do
             , requestBody = RequestBodyBS $ L.toStrict $ A.encode er
             }
 
-    res2 <- http req manager
-    res <- responseBody res2 $$+- sinkLbs
+    res2 <- HTTP.http req manager
+    res <- HTTP.responseBody res2 $$+- sinkLbs
     return (A.decode res :: Maybe SearchResponse)
 
 defaultEbayConfig :: EbayConfig

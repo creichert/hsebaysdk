@@ -29,4 +29,3 @@ Running the example from GHCi:
 #+END_SRC
 
 /Currently, this module only supports the Finding api./
-
