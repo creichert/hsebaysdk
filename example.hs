@@ -20,6 +20,7 @@ averageCurrentPrice sr = case sr of
 printAvg :: Maybe SearchResponse -> IO ()
 printAvg = print . (<>) "Average price: $" . show . averageCurrentPrice
 
+
 main :: IO ()
 main = do
 

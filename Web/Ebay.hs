@@ -47,37 +47,36 @@ import           Network.HTTP.Types           as HTTP (Header)
 
 
 -- | Ebay api configuration.
---  * TODO: qualify names
 data EbayConfig = EbayConfig
-                { domain           :: Text
-                , uri              :: Text
-                , https            :: Bool
-             -- , warnings :: Bool
-             -- , errors  :: Bool
-                , siteid           :: Text
-                , responseEncoding :: Encoding
-                , requestEncoding  :: Encoding
-             -- , proxy_host :: Text
-             -- , proxy_port :: Text
-             -- , token :: Text
-             -- , iaf_token :: Text
-                , appid            :: Text
-                , version          :: Text
-                , service          :: Text
-                , docUrl           :: Text
-                , debug            :: Bool
-                } deriving Show
+    { domain           :: Text
+    , uri              :: Text
+    , https            :: Bool
+ -- , warnings :: Bool
+ -- , errors  :: Bool
+    , siteid           :: Text
+    , responseEncoding :: Encoding
+    , requestEncoding  :: Encoding
+ -- , proxy_host :: Text
+ -- , proxy_port :: Text
+ -- , token :: Text
+ -- , iaf_token :: Text
+    , appid            :: Text
+    , version          :: Text
+    , service          :: Text
+    , docUrl           :: Text
+    , debug            :: Bool
+    } deriving Show
 
 -- | Supported response encoding
 data Encoding = XmlEncoding
               | JsonEncoding
               deriving Show
 
--- | Request for ebay finding api
 data SearchRequest = SearchRequest
-                 { verb    :: FindVerb
-                 , payload :: Search
-                 } deriving Show
+    { verb :: FindVerb
+    , payload :: Search
+    } deriving Show
+
 
 instance ToJSON SearchRequest where
     toJSON SearchRequest{..} = object [ "jsonns.xsi" .= xsi
