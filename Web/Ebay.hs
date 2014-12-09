@@ -456,16 +456,15 @@ requestHeadersFromConfig fb EbayConfig{..} =
     dataFormatEncode JsonEncoding = utf8 "JSON"
     dataFormatEncode XmlEncoding  = utf8 "XML"
 
-findVerbToOperation :: FindVerb -> Text
-findVerbToOperation fb = case fb of
-    FindItemsByKeywords -> "findItemsByKeywords"
-    FindCompletedItems  -> "findCompletedItems"
-    FindItemsAdvanced   -> "findItemsAdvanced"
-    _ -> error "Unsupported find verb to text operation."
-
-findVerbToTns :: FindVerb -> Text
-findVerbToTns fb = case fb of
-    FindItemsByKeywords -> "findItemsByKeywordsRequest"
-    FindCompletedItems  -> "findCompletedItemsRequest"
-    FindItemsAdvanced   -> "findItemsAdvancedRequest"
-    _ -> error "Unsupported find verb to tns operation."
+-- TODO concat down to one function.
+--
+-- | X-EBAY-SOA-OPERATION-NAME
+findVerbToOperation :: FindVerb -> Bool -> Text
+findVerbToOperation fb request = op ++ req
+  where
+    op = case fb of
+          FindItemsByKeywords -> "findItemsByKeywords"
+          FindCompletedItems  -> "findCompletedItems"
+          FindItemsAdvanced   -> "findItemsAdvanced"
+          _ -> error "Unsupported find verb to text operation."
+    req = if request then "Request" else ""
