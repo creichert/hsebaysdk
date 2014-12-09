@@ -43,8 +43,9 @@ main = do
                             , searchItemFilter = [ ItemFilter ("Condition", condition) ]
                             , searchAffiliateInfo = Nothing
                             }
+
             searchRequest = SearchRequest FindItemsByKeywords search
 
-        _ <- withSearchRequest searchRequest config manager handler
+        _ <- searchWithVerb searchRequest config manager handler
 
         return ()

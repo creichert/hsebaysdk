@@ -31,11 +31,8 @@ library
                   base                 == 4.*
                 , aeson                >= 0.8
                 , bytestring
-                , conduit              >= 1.1
-                , conduit-extra        >= 1.1
-                , http-conduit         >= 2.1
+                , http-client          >= 0.4
                 , http-types
-                , resourcet            >= 1.1
                 , text                 >= 1.1
                 , time
                 , transformers         >= 0.2

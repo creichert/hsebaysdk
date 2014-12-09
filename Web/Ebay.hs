@@ -25,10 +25,10 @@ module Web.Ebay
     , AffiliateInfo(..)
     ) where
 
+
 import           Control.Applicative          (pure, (<$>), (<*>))
 import           Control.Monad                (mzero)
-import           Control.Monad.IO.Class       (MonadIO)
-import           Control.Monad.Trans.Resource (MonadResource)
+import           Control.Monad.IO.Class       (MonadIO(liftIO))
 import           Data.Aeson                   as A
 import           Data.Aeson.Types             (Parser)
 import qualified Data.ByteString.Lazy.Char8   as L
@@ -425,30 +425,33 @@ data FindVerb = FindCompletedItems -- Retrieves items whose listings
 
 
 -- | Runs an eBay Finding API search
-searchWithVerb :: (MonadIO m, MonadResource m)
-               => FindVerb -- action to run
-               -> Search -- search request
-               -> EbayConfig -- api configuration
-               -> Manager -- http connection manager
+searchWithVerb :: MonadIO m
+               => FindVerb -- ^ action to run
+               -> Search -- ^ search request
+               -> EbayConfig -- ^ api configuration
+               -> Manager -- ^ http connection manager
                -> m (Maybe SearchResponse)
+searchWithVerb cmd search cfg manager = do
 
-searchWithVerb cmd search cfg@EbayConfig{..} manager = do
+    initreq <- liftIO $ HTTP.parseUrl (eburl cfg)
 
-    let proto = if ebHttps then "https://" else "http://"
-    initreq <- HTTP.parseUrl $ T.unpack $ proto <> ebDomain <> ebUri
-
-    let verb    = cmd
-        payload = search
-        er = SearchRequest { .. }
-        req = initreq
+    let req = initreq
             { method = "POST"
             , requestHeaders = requestHeaders initreq
                             ++ requestHeadersFromConfig cmd cfg
-            , requestBody = RequestBodyBS $ L.toStrict $ A.encode er
+            , requestBody = encodeRequestBody esr
             }
 
-    res' <- HTTP.httpLbs req manager
-    return (A.decode res' :: Maybe SearchResponse)
+    res' <- liftIO $ HTTP.httpLbs req manager
+    return $ decodeResponseBody res'
+  where
+    proto = if ebHttps cfg then "https://" else "http://"
+    eburl EbayConfig{..} = T.unpack $ proto <> ebDomain <> ebUri
+    esr   = SearchRequest cmd search
+    encodeRequestBody = RequestBodyBS . L.toStrict . A.encode
+    decodeResponseBody :: Response L.ByteString -> Maybe SearchResponse
+    decodeResponseBody = A.decode . responseBody
+
 
 -- | Default Ebay configuration for working with the finding API in a
 -- sandbox.
