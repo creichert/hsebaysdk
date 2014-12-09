@@ -1,6 +1,9 @@
+-- | Haskell SDK for Ebay Finding API
+
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
+
 module Web.Ebay
     ( defaultEbayConfig
     , withSearchRequest
