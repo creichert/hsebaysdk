@@ -463,17 +463,16 @@ requestHeadersFromConfig fb EbayConfig{..} =
 
 -- | Convert the FindVerb to Text suitable for ebay request headers.
 findVerbToOperation :: FindVerb -> Bool -> Text
-findVerbToOperation fb tns = op ++ req
+findVerbToOperation fb tns = op <> req
   where
     op = case fb of
           FindItemsByKeywords             -> "findItemsByKeywords"
           FindCompletedItems              -> "findCompletedItems"
           FindItemsAdvanced               -> "findItemsAdvanced"
-          -- FindItemsByImage                -> "findFindItemsByImage"
-          -- FindItemsByKeywords             -> "findFindItemsByKeywords"
-          -- FindItemsByProduct              -> "findFindItemsByProduct"
-          -- FindItemsIneBayStores           -> "findFindItemsIneBayStores"
-          -- GetHistograms                   -> "findGetHistograms"
-          -- GetSearchKeywordsRecommendation -> "findGetSearchKeywordsRecommendation"
-          -- GetVersion                      -> "findGetVersion"
+          FindItemsByImage                -> "findItemsByImage"
+          FindItemsByProduct              -> "findItemsByProduct"
+          FindItemsIneBayStores           -> "findItemsIneBayStores"
+          GetHistograms                   -> "getHistograms"
+          GetSearchKeywordsRecommendation -> "getSearchKeywordsRecommendation"
+          GetVersion                      -> "getVersion"
     req = if tns then "Request" else ""
