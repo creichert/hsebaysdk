@@ -32,8 +32,6 @@ import           Control.Monad.Trans.Resource (MonadResource)
 import           Data.Aeson                   as A
 import           Data.Aeson.Types             (Parser)
 import qualified Data.ByteString.Lazy.Char8   as L
-import           Data.Conduit                 (($$+-))
-import           Data.Conduit.Binary          (sinkLbs)
 import qualified Data.HashMap.Strict          as HM
 import           Data.Monoid                  ((<>))
 import           Data.Time                    (UTCTime)
@@ -41,29 +39,58 @@ import           Data.Text                    (Text)
 import qualified Data.Text                    as T
 import qualified Data.Text.Encoding           as T
 import           GHC.Generics                 (Generic)
-import           Network.HTTP.Conduit         as HTTP
+import           Network.HTTP.Client          as HTTP
 import           Network.HTTP.Types           as HTTP (Header)
 
 
 
 -- | Ebay api configuration.
 data EbayConfig = EbayConfig
-    { ebDomain           :: !Text
+    {
+      -- | ebay api domain configuration
+      --
+      -- Sandbox: svcs.sandbox.ebay.com
+      -- Production: svcs.ebay.com
+      ebDomain           :: !Text
+
+      -- | ebay api domain configuration
     , ebUri              :: !Text
+
+      -- | use https
+      --
+      -- defaults to False.
     , ebHttps            :: !Bool
- -- , ebWarnings :: Bool
- -- , ebErrors  :: Bool
+ -- , ebWarnings         :: !Bool
+ -- , ebErrors           :: !Bool
+
+      -- | EBay API Site Id.
+      --
+      -- Default is `EBAY-US'.
     , ebSiteId           :: !Text
+
+      -- | Specify the response encoding.
     , ebResponseEncoding :: !Encoding
+
+      -- | Specify the request encoding.
     , ebRequestEncoding  :: !Encoding
- -- , ebProxy_host :: Text
- -- , ebProxy_port :: Text
- -- , ebToken :: Text
- -- , ebIaf_token :: Text
+ -- , ebProxy_host       :: !Text
+ -- , ebProxy_port       :: !Text
+ -- , ebToken            :: !Text
+ -- , ebIaf_token        :: !Text
+
+      -- api key
     , ebAppId            :: !Text
     , ebVersion          :: !Text
+
+      -- | eBay API service.
+      --
+      -- Currently, this library only supports the
+      -- Finding API and this value is always
+      -- `FindingApi'
     , ebService          :: !Text
     , ebDocUrl           :: !Text
+
+      -- | Enable debugging
     , ebDebug            :: !Bool
     } deriving Show
 
@@ -236,32 +263,32 @@ instance FromJSON SearchResult where
                      <*> sr .: "item"
     parseJSON _ = mzero
 
--- | A single product item
+-- | A single ebay listing item
 --
--- This items is not a direct translation of the
--- eBay type yet.
+-- Note that some fields have not yet been implemented
+-- from the ebay api documentation.
 data SearchItem = SearchItem
-    { searchItemId                    :: Text
-    , searchItemTitle                 :: Text
-    , searchItemSubtitle              :: Maybe Text
-    , searchItemTopRatedListing       :: Bool
-    , searchItemViewItemUrl           :: Text
-    -- , searchItemGalleryInfo           :: Maybe GalleryInfo
-    , searchItemGalleryUrl            :: Maybe Text
-    , searchItemGalleryPlusPictureUrl :: Maybe Text
-    , searchItemPictureLargeUrl       :: Maybe Text
+    { searchItemId                    :: !Text
+    , searchItemTitle                 :: !Text
+    , searchItemSubtitle              :: !(Maybe Text)
+    , searchItemTopRatedListing       :: !Bool
+    , searchItemViewItemUrl           :: !Text
+    -- , searchItemGalleryInfo        :: Maybe GalleryInfo
+    , searchItemGalleryUrl            :: !(Maybe Text)
+    , searchItemGalleryPlusPictureUrl :: !(Maybe Text)
+    , searchItemPictureLargeUrl       :: !(Maybe Text)
     -- , searchItemPictureSuperSizeUrl :: Text
-    -- , searchItemPostalCode :: Text
-    -- , searchItemThumbnailUrl  :: Text
-    , searchItemCondition     :: Condition
-    , searchItemSellingStatus :: SellingStatus
-    , searchItemListingInfo   :: Maybe ListingInfo
-    -- , searchItemCategory :: Category
-    -- , searchItemSellerInfo :: SellerInfo
+    -- , searchItemPostalCode          :: Text
+    -- , searchItemThumbnailUrl        :: Text
+    , searchItemCondition             :: Condition
+    , searchItemSellingStatus         :: SellingStatus
+    , searchItemListingInfo           :: Maybe ListingInfo
+    -- , searchItemCategory           :: Category
+    -- , searchItemSellerInfo         :: SellerInfo
     } deriving Show
 
 data GalleryInfo = GalleryInfo
-    { galleryInfoUrls :: [Text]
+    { galleryInfoUrls :: ![Text]
     } deriving Show
 
 -- TODO: Cleanup parsing
@@ -297,13 +324,13 @@ instance FromJSON ListingType
 data ListingInfo = ListingInfo
     { listingInfoBestOfferEnabled       :: !Bool
     , listingInfoBuyItNowAvailable      :: !Bool
-    , listingInfoBuyItNowPrice          :: !(Maybe Text)  -- Double
+
+    , listingInfoBuyItNowPrice          :: !(Maybe Text)
+    , listingInfoConvertedBuyItNowPrice :: !(Maybe Text)
       -- TODO it would be preferrabel to use Double fields for
       --  all pricing. However, in practice I noticed a significant
       --  amount of unpredicatble parse errors.
 
-
-    , listingInfoConvertedBuyItNowPrice :: !(Maybe Text)  -- Double
     , listingInfoEndTime                :: !UTCTime
     , listingInfoGift                   :: !Bool
     , listingInfoType                   :: ListingType
@@ -413,18 +440,18 @@ searchWithVerb cmd search cfg@EbayConfig{..} manager = do
     let verb    = cmd
         payload = search
         er = SearchRequest { .. }
-
-    let req = initreq
+        req = initreq
             { method = "POST"
             , requestHeaders = requestHeaders initreq
                             ++ requestHeadersFromConfig cmd cfg
             , requestBody = RequestBodyBS $ L.toStrict $ A.encode er
             }
 
-    res2 <- HTTP.http req manager
-    res <- HTTP.responseBody res2 $$+- sinkLbs
-    return (A.decode res :: Maybe SearchResponse)
+    res' <- HTTP.httpLbs req manager
+    return (A.decode res' :: Maybe SearchResponse)
 
+-- | Default Ebay configuration for working with the finding API in a
+-- sandbox.
 defaultEbayConfig :: EbayConfig
 defaultEbayConfig = EbayConfig
     { ebDomain = "svcs.ebay.com"
@@ -440,6 +467,8 @@ defaultEbayConfig = EbayConfig
     , ebHttps = False
     }
 
+
+-- | Generate the list of HTTP headers needed by a 'SearchRequest'
 requestHeadersFromConfig :: FindVerb -> EbayConfig -> [HTTP.Header]
 requestHeadersFromConfig fb EbayConfig{..} =
     [ ("Content-Type", "application/json")
