@@ -1,5 +1,5 @@
 name:                hsebaysdk
-version:             0.2.0.0
+version:             0.3.0.0
 copyright:           (c) 2014 Christopher Reichert
 synopsis:            Haskell eBay SDK
 homepage:            https://github.com/creichert/hsebaysdk

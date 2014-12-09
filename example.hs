@@ -27,11 +27,11 @@ main = do
     let condition = "Used"
         keywords = "mechanical keyboard"
         handler = liftIO . print . averageCurrentPrice
-        config = defaultEbayConfig { domain = "svcs.ebay.com"
+        config = defaultEbayConfig { ebDomain = "svcs.ebay.com"
                                      -- ^ Use `svcs.sandbox.ebay.com` when
                                      --   connecting to sandbox.
-                                   , appid = "EBAY_APP_ID"
-                                   , debug = False
+                                   , ebAppId = "EBAY_APP_ID"
+                                   , ebDebug = False
                                    }
 
     withManager $ \manager -> do

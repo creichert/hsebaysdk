@@ -127,24 +127,24 @@ instance ToJSON Search where
                                    ++ ifilter searchItemFilter
                                    ++ oselector searchOutputSelector
                                    ++ affiliate searchAffiliateInfo
-      where order (Just so) = ["sortOrder" .= so]
-            order Nothing = []
+      where order (Just so)     = ["sortOrder" .= so]
+            order Nothing       = []
             -- item filter field should not be
             -- added if the list is empty.
-            ifilter [] = []
-            ifilter sif = [ "itemFilter" .=  sif ]
-            oselector Nothing = []
+            ifilter []          = []
+            ifilter sif         = [ "itemFilter" .=  sif ]
+            oselector Nothing   = []
             oselector (Just os) = [ "outputSelector" .= os ]
-            affiliate Nothing = []
-            affiliate (Just a) = [ "affiliate" .= a ]
+            affiliate Nothing   = []
+            affiliate (Just a)  = [ "affiliate" .= a ]
 
 data AffiliateInfo = AffiliateInfo
-    { networkId :: Int
+    { networkId  :: !Int
     -- ^ The networkId specifies the third party who is your tracking
     --   partner. When specifying affiliate details, this field is
     --   required. Not all partners are valid for all sites.
 
-    , trackingId :: Int
+    , trackingId :: !Int
     -- ^ The trackingId specifies an ID to identify you to your
     --   tracking partner. The value you specify is obtained from
     --   your tracking partner. For eBay Partner Network, the
@@ -183,6 +183,7 @@ data SortOrder = EndTimeSoonest
                deriving (Show,  Generic)
 
 instance ToJSON SortOrder
+
 
 -- parse a json field and take the head of the list.
 --
