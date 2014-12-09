@@ -120,7 +120,7 @@ instance ToJSON SearchRequest where
     toJSON SearchRequest{..} = object [ "jsonns.xsi" .= xsi
                                       , "jsonns.xs"  .= xs
                                       , "jsonns.tns" .= nstns
-                                      , tns .= payload
+                                      , tns          .= payload
                                       ]
       where tns   = "tns." <> findVerbToOperation verb True
             xsi   = "http://www.w3.org/2001/XMLSchema-instance" :: Text
