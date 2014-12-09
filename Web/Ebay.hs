@@ -46,25 +46,26 @@ import           Network.HTTP.Conduit         as HTTP
 import           Network.HTTP.Types           as HTTP (Header)
 
 
+
 -- | Ebay api configuration.
 data EbayConfig = EbayConfig
-    { ebDomain           :: Text
-    , ebUri              :: Text
-    , ebHttps            :: Bool
+    { ebDomain           :: !Text
+    , ebUri              :: !Text
+    , ebHttps            :: !Bool
  -- , ebWarnings :: Bool
  -- , ebErrors  :: Bool
-    , ebSiteId           :: Text
-    , ebResponseEncoding :: Encoding
-    , ebRequestEncoding  :: Encoding
+    , ebSiteId           :: !Text
+    , ebResponseEncoding :: !Encoding
+    , ebRequestEncoding  :: !Encoding
  -- , ebProxy_host :: Text
  -- , ebProxy_port :: Text
  -- , ebToken :: Text
  -- , ebIaf_token :: Text
-    , ebAppId            :: Text
-    , ebVersion          :: Text
-    , ebService          :: Text
-    , ebDocUrl           :: Text
-    , ebDebug            :: Bool
+    , ebAppId            :: !Text
+    , ebVersion          :: !Text
+    , ebService          :: !Text
+    , ebDocUrl           :: !Text
+    , ebDebug            :: !Bool
     } deriving Show
 
 -- | Supported response encoding
@@ -73,7 +74,7 @@ data Encoding = XmlEncoding
               deriving Show
 
 data SearchRequest = SearchRequest
-    { verb :: FindVerb
+    { verb    :: !FindVerb
     , payload :: Search
     } deriving Show
 
@@ -112,11 +113,11 @@ instance FromJSON OutputSelector
 
 -- | Generic search query for ebay api.
 data Search = Search
-            { searchKeywords   :: Text
+            { searchKeywords       :: !Text
             , searchOutputSelector :: Maybe OutputSelector
-            , searchSortOrder  :: Maybe SortOrder
-            , searchItemFilter :: [ItemFilter]
-            , searchAffiliateInfo :: Maybe AffiliateInfo
+            , searchSortOrder      :: Maybe SortOrder
+            , searchItemFilter     :: ![ItemFilter]
+            , searchAffiliateInfo  :: Maybe AffiliateInfo
             } deriving Show
 
 instance ToJSON Search where
@@ -152,20 +153,20 @@ data AffiliateInfo = AffiliateInfo
     --   to be used for associating traffic. A Campaign ID is valid
     --   across all programs to which you have been accepted.
 
-    , customId :: Maybe Int
+    , customId  :: !(Maybe Int)
     -- ^ The customId need not be specified. You can define a customId
     --   (up to 256 characters) if you want to leverage it to better
     --   monitor your marketing efforts. If you are using the eBay Partner
     --   Network, and you provide a customId, it will be contained in the
     --   tracking URL returned by eBay Partner Network.
 
-    } deriving Show
+    } deriving (Eq, Read, Show)
 
 instance ToJSON AffiliateInfo where
     toJSON AffiliateInfo{..} =
         object [ "trackingId" .= trackingId
-               , "networkId" .= networkId
-               , "customId" .= customId
+               , "networkId"  .= networkId
+               , "customId"   .= customId
                ]
 
 data SortOrder = EndTimeSoonest
@@ -294,14 +295,19 @@ data ListingType = Auction
 instance FromJSON ListingType
 
 data ListingInfo = ListingInfo
-    { listingInfoBestOfferEnabled :: Bool
-    , listingInfoBuyItNowAvailable :: Bool
-    , listingInfoBuyItNowPrice :: Maybe Text -- Double
-    , listingInfoConvertedBuyItNowPrice :: Maybe Text -- Double
-    , listingInfoEndTime :: UTCTime
-    , listingInfoGift :: Bool
-    , listingInfoType :: ListingType
-    , listingInfoStartTime :: UTCTime
+    { listingInfoBestOfferEnabled       :: !Bool
+    , listingInfoBuyItNowAvailable      :: !Bool
+    , listingInfoBuyItNowPrice          :: !(Maybe Text)  -- Double
+      -- TODO it would be preferrabel to use Double fields for
+      --  all pricing. However, in practice I noticed a significant
+      --  amount of unpredicatble parse errors.
+
+
+    , listingInfoConvertedBuyItNowPrice :: !(Maybe Text)  -- Double
+    , listingInfoEndTime                :: !UTCTime
+    , listingInfoGift                   :: !Bool
+    , listingInfoType                   :: ListingType
+    , listingInfoStartTime              :: !UTCTime
     } deriving Show
 
 instance FromJSON ListingInfo where
@@ -331,10 +337,10 @@ instance FromJSON ListingInfo where
     parseJSON _ = mzero
 
 data SellingStatus = SellingStatus
-    { sellingStatusConvertedCurrentPrice :: Double
-    , sellingStatusCurrentPrice :: Double
-    , sellingStatusBidCount :: Maybe Text
-    , sellingStatusState :: SellingState
+    { sellingStatusConvertedCurrentPrice :: !Double
+    , sellingStatusCurrentPrice          :: !Double
+    , sellingStatusBidCount              :: !(Maybe Text)
+    , sellingStatusState                 :: SellingState
     } deriving Show
 
 instance FromJSON SellingStatus where
@@ -378,7 +384,6 @@ data FindVerb = FindCompletedItems -- Retrieves items whose listings
               | FindItemsAdvanced -- Finds items by a keyword query
                                   -- and/or category and allows
                                   -- searching within item descriptions.
-              | Find
               | FindItemsByImage
               | FindItemsByKeywords
               | FindItemsByProduct
