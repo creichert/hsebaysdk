@@ -5,23 +5,10 @@ module Main where
 import Data.Monoid ((<>))
 import Web.Ebay
 
-averageCurrentPrice :: Maybe SearchResponse -> Double
-averageCurrentPrice sr = case sr of
-    Nothing -> 0.0
-    Just (SearchResponse _ SearchResult{..}) ->
-        let price SellingStatus{..} = sellingStatusConvertedCurrentPrice
-            f SearchItem{..} = (+) (price searchItemSellingStatus)
-            total = foldr f 0.0 searchResultItems
-        in total / fromIntegral (length searchResultItems)
-
-printAvg :: Maybe SearchResponse -> IO ()
-printAvg = print . (<>) "Average price: $" . show . averageCurrentPrice
-
 
 main :: IO ()
-main = do
-    results <- simpleSearchWithVerb config searchRequest
-    printAvg results
+main = simpleSearchWithVerb config searchRequest
+   >>= printAvg
   where
     condition = "Used"
     keywords = "mechanical keyboard"
@@ -40,3 +27,19 @@ main = do
                     }
 
     searchRequest = SearchRequest FindItemsByKeywords search
+
+
+printAvg :: Maybe SearchResponse -> IO ()
+printAvg = print . (<>) "Average price: $" . show . averageCurrentPrice
+
+
+-- | Calculate the average price from the listings within a
+-- 'SearchResponse'.
+averageCurrentPrice :: Maybe SearchResponse -> Double
+averageCurrentPrice sr = case sr of
+    Nothing -> 0.0
+    Just (SearchResponse _ SearchResult{..}) ->
+        let price SellingStatus{..} = sellingStatusConvertedCurrentPrice
+            f SearchItem{..} = (+) (price searchItemSellingStatus)
+            total = foldr f 0.0 searchResultItems
+        in total / fromIntegral (length searchResultItems)

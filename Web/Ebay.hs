@@ -1,4 +1,12 @@
--- | Haskell SDK for Ebay Finding API
+-- |
+-- Module      : Api
+-- Copyright   : (c) Christopher Reichert, 2014
+-- License     : AllRightsReserved
+-- Maintainer  : Christopher Reichert <creichert@reichertbrothers.com>
+-- Stability   : experimental
+-- Portability : GNU/Linux, FreeBSD
+--
+-- Haskell SDK for Ebay Finding API
 
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -107,22 +115,23 @@ data Encoding = XmlEncoding
               deriving Show
 
 
+-- | Ebay Finding API search request.
 data SearchRequest = SearchRequest
-    { verb    :: !FindVerb
-    , payload :: Search
+    { verb    :: !FindVerb  -- ^ specify the type of search
+    , payload :: Search -- ^ body of the search (xml or json)
     } deriving Show
 
 
 instance ToJSON SearchRequest where
-    toJSON SearchRequest{..} = object [ "jsonns.xsi" .= xsi
-                                      , "jsonns.xs"  .= xs
-                                      , "jsonns.tns" .= nstns
+    toJSON SearchRequest{..} = object [ "jsonns.xsi" .= (xsi :: Text)
+                                      , "jsonns.xs"  .= (xs :: Text)
+                                      , "jsonns.tns" .= (nstns :: Text)
                                       , tns          .= payload
                                       ]
       where tns   = "tns." <> findVerbToOperation verb True
-            xsi   = "http://www.w3.org/2001/XMLSchema-instance" :: Text
-            xs    = "http://www.w3.org/2001/XMLSchema" :: Text
-            nstns = "http://www.ebay.com/marketplace/search/v1/services" :: Text
+            xsi   = "http://www.w3.org/2001/XMLSchema-instance"
+            xs    = "http://www.w3.org/2001/XMLSchema"
+            nstns = "http://www.ebay.com/marketplace/search/v1/services"
 
 
 newtype ItemFilter = ItemFilter (Text, Text) deriving Show
@@ -253,23 +262,36 @@ data SearchResponse = SearchResponse FindVerb SearchResult
                     deriving Show
 
 
+parseHead :: FromJSON a => [a] -> Maybe a
+parseHead (x:_) = Just x
+parseHead _     = Nothing
+
 -- use GADTs to get rid of this.
 instance FromJSON SearchResponse where
     parseJSON (Object o) = case HM.keys o of
         ("findCompletedItemsResponse":_) -> do
-            obj <- o .:> "findCompletedItemsResponse"
-            SearchResponse <$> pure FindCompletedItems
-                           <*> parseJSON obj
+            mobj <- o .: "findCompletedItemsResponse"
+            case parseHead mobj of
+              Nothing -> mzero
+              Just obj -> SearchResponse
+                            <$> pure FindCompletedItems
+                            <*> parseJSON obj
         ("findItemsByKeywordsResponse":_) -> do
-            obj <- o .:> "findItemsByKeywordsResponse"
-            SearchResponse <$> pure FindItemsByKeywords
-                           <*> parseJSON obj
+            mobj <- o .: "findItemsByKeywordsResponse"
+            case parseHead mobj of
+              Nothing -> mzero
+              Just obj -> SearchResponse
+                            <$> pure FindItemsByKeywords
+                            <*> parseJSON obj
         ("findItemsAdvancedResponse":_) -> do
-            obj <- o .:> "findItemsAdvancedResponse"
-            SearchResponse <$> pure FindItemsAdvanced
-                           <*> parseJSON obj
+            mobj <- o .: "findItemsAdvancedResponse"
+            case parseHead mobj of
+              Nothing -> mzero
+              Just obj -> SearchResponse
+                            <$> pure FindItemsAdvanced
+                            <*> parseJSON obj
         ("errorMessage":_) -> error $ "An error occurred: " ++ show o
-        _ -> error $ "Response type not implemented: " ++ take 1000 (show o)
+        _ -> mzero
     parseJSON _ = mzero
 
 
@@ -281,7 +303,7 @@ data SearchResult = SearchResult
 
 instance FromJSON SearchResult where
     parseJSON (Object o) = do
-        sr <-  o .:> "searchResult"
+        sr <- o .:> "searchResult"
         SearchResult <$> sr .: "@count"
                      <*> sr .: "item"
     parseJSON _ = mzero
@@ -412,7 +434,7 @@ instance FromJSON SellingStatus where
                                    >>= return . read . T.unpack)
                         <*>  o .:?> "bidCount"
                         <*>  o .:> "sellingState"
-    parseJSON _ = error "Unable to parse SellingStatus."
+    parseJSON _ = mzero
 
 
 data SellingState = Active
@@ -434,7 +456,7 @@ instance FromJSON Condition where
     parseJSON (Object o) = Condition
                         <$> o .:> "conditionId"
                         <*> o .:> "conditionDisplayName"
-    parseJSON _ = error "Error parsing Condition."
+    parseJSON _ = mzero
 
 
 -- | Support verbs in finding api
@@ -500,18 +522,20 @@ searchWithVerb ecfg cmd search manager = do
 -- sandbox.
 defaultEbayConfig :: EbayConfig
 defaultEbayConfig = EbayConfig
-    { ebDomain = "svcs.ebay.com"
-    , ebUri = "/services/search/FindingService/v1"
-    , ebSiteId = "EBAY-US"
+    { ebDomain           = "svcs.ebay.com"
+    , ebUri              = "/services/search/FindingService/v1"
+    , ebSiteId           = "EBAY-US"
     , ebResponseEncoding = JsonEncoding
-    , ebRequestEncoding = JsonEncoding
-    , ebAppId = ""
-    , ebVersion = "1.12.0"
-    , ebService = "FindingService"
-    , ebDocUrl = "http://developer.ebay.com/DevZone/finding/CallRef/index.html"
-    , ebDebug = False
-    , ebHttps = False
+    , ebRequestEncoding  = JsonEncoding
+    , ebAppId            = ""
+    , ebVersion          = "1.12.0"
+    , ebService          = "FindingService"
+    , ebDocUrl           = docurl
+    , ebDebug            = False
+    , ebHttps            = False
     }
+  where
+    docurl = "http://developer.ebay.com/DevZone/finding/CallRef/index.html"
 
 
 -- | Generate the list of HTTP headers needed by a 'SearchRequest'
@@ -522,7 +546,7 @@ requestHeadersFromConfig fb EbayConfig{..} =
     , ("X-EBAY-SOA-SERVICE-VERSION", utf8 ebVersion)
     , ("X-EBAY-SOA-SECURITY-APPNAME", utf8 ebAppId)
     , ("X-EBAY-SOA-GLOBAL-ID", utf8 ebSiteId)
-    , ("X-EBAY-SOA-OPERATION-NAME", T.encodeUtf8 (findVerbToOperation fb False))
+    , ("X-EBAY-SOA-OPERATION-NAME", encodedFindVerb)
     , ("X-EBAY-SOA-REQUEST-DATA-FORMAT",  dataFormatEncode ebRequestEncoding)
     , ("X-EBAY-SOA-RESPONSE-DATA-FORMAT", dataFormatEncode ebResponseEncoding)
     ]
@@ -530,6 +554,7 @@ requestHeadersFromConfig fb EbayConfig{..} =
     utf8 = T.encodeUtf8
     dataFormatEncode JsonEncoding = utf8 "JSON"
     dataFormatEncode XmlEncoding  = utf8 "XML"
+    encodedFindVerb = T.encodeUtf8 $ findVerbToOperation fb False
 
 
 -- | Convert the FindVerb to Text suitable for ebay request headers.
