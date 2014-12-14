@@ -8,6 +8,7 @@ module Web.Ebay
     (
       -- ** Functions
       searchWithVerb
+    , simpleSearchWithVerb
     , defaultEbayConfig
 
       -- ** Ebay API types.
@@ -35,21 +36,21 @@ module Web.Ebay
     ) where
 
 
-import           Control.Applicative          (pure, (<$>), (<*>))
-import           Control.Monad                (mzero)
-import           Control.Monad.IO.Class       (MonadIO(liftIO))
-import           Data.Aeson                   as A
-import           Data.Aeson.Types             (Parser)
-import qualified Data.ByteString.Lazy.Char8   as L
-import qualified Data.HashMap.Strict          as HM
-import           Data.Monoid                  ((<>))
-import           Data.Time                    (UTCTime)
-import           Data.Text                    (Text)
-import qualified Data.Text                    as T
-import qualified Data.Text.Encoding           as T
-import           GHC.Generics                 (Generic)
-import           Network.HTTP.Client          as HTTP
-import           Network.HTTP.Types           as HTTP (Header)
+import           Control.Applicative        (pure, (<$>), (<*>))
+import           Control.Monad              (mzero)
+import           Control.Monad.IO.Class     (MonadIO (liftIO))
+import           Data.Aeson                 as A
+import           Data.Aeson.Types           (Parser)
+import qualified Data.ByteString.Lazy.Char8 as L
+import qualified Data.HashMap.Strict        as HM
+import           Data.Monoid                ((<>))
+import           Data.Text                  (Text)
+import qualified Data.Text                  as T
+import qualified Data.Text.Encoding         as T
+import           Data.Time                  (UTCTime)
+import           GHC.Generics               (Generic)
+import           Network.HTTP.Client        as HTTP
+import           Network.HTTP.Types         as HTTP (Header)
 
 
 
@@ -193,7 +194,7 @@ data AffiliateInfo = AffiliateInfo
       --   to be used for associating traffic. A Campaign ID is valid
       --   across all programs to which you have been accepted.
 
-    , customId  :: !(Maybe Int)
+    , customId   :: !(Maybe Int)
       -- ^ The customId need not be specified. You can define a customId
       --   (up to 256 characters) if you want to leverage it to better
       --   monitor your marketing efforts. If you are using the eBay Partner
@@ -459,28 +460,35 @@ data FindVerb = FindCompletedItems -- Retrieves items whose listings
 ------------------------------------------------------------------------------
 
 
+simpleSearchWithVerb :: EbayConfig
+                     -> SearchRequest
+                     -> IO (Maybe SearchResponse)
+simpleSearchWithVerb cfg (SearchRequest fv s)  =
+  withManager defaultManagerSettings $ searchWithVerb cfg fv s
+
+
 -- | Runs an eBay Finding API search
 searchWithVerb :: MonadIO m
-               => FindVerb -- ^ action to run
+               => EbayConfig -- ^ api configuration
+               -> FindVerb -- ^ action to run
                -> Search -- ^ search request
-               -> EbayConfig -- ^ api configuration
                -> Manager -- ^ http connection manager
                -> m (Maybe SearchResponse)
-searchWithVerb cmd search cfg manager = do
+searchWithVerb ecfg cmd search manager = do
 
-    initreq <- liftIO $ HTTP.parseUrl (eburl cfg)
+    initreq <- liftIO $ HTTP.parseUrl (eburl ecfg)
 
     let req = initreq
             { method = "POST"
             , requestHeaders = requestHeaders initreq
-                            ++ requestHeadersFromConfig cmd cfg
+                            ++ requestHeadersFromConfig cmd ecfg
             , requestBody = encodeRequestBody esr
             }
 
     res' <- liftIO $ HTTP.httpLbs req manager
     return $ decodeResponseBody res'
   where
-    proto = if ebHttps cfg then "https://" else "http://"
+    proto = if ebHttps ecfg then "https://" else "http://"
     eburl EbayConfig{..} = T.unpack $ proto <> ebDomain <> ebUri
     esr   = SearchRequest cmd search
     encodeRequestBody = RequestBodyBS . L.toStrict . A.encode
