@@ -30,7 +30,8 @@ library
                 , time
                 , transformers         >= 0.2
                 , unordered-containers >= 0.2
-
+  if impl(ghc < 7.6)
+    build-depends: ghc-prim
 source-repository head
   type: git
   location: https://github.com/creichert/hsebaysdk
