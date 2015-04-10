@@ -1,6 +1,10 @@
+#+TITLE: Haskell Ebay SDK
+#+AUTHOR: Christopher Reichert
+#+EMAIL: creichert07@gmail.com
 * Haskell eBay SDK
 
 [[https://travis-ci.org/creichert/hsebaysdk][https://travis-ci.org/creichert/hsebaysdk.png?branch=master]]
+[[https://hackage.haskell.org/package/hsebaysdk][https://img.shields.io/hackage/v/hsebaysdk.svg?dummy]]
 
 A Haskell programming interface to the eBay API.
 
