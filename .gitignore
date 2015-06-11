@@ -2,6 +2,8 @@
 *.swp
 *.swn
 *.xml
+.stack-work
+dist-stack
 .cabal-sandbox/
 cabal.sandbox.config
 dist/
