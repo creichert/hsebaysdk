@@ -156,7 +156,9 @@ data OutputSelector = AspectHistogram
                     deriving (Generic, Read, Show)
 
 
-instance ToJSON OutputSelector
+instance ToJSON OutputSelector where
+    toJSON = A.genericToJSON A.defaultOptions
+
 instance FromJSON OutputSelector
 
 
@@ -235,9 +237,8 @@ data SortOrder = EndTimeSoonest
                | StartTimeNewest
                deriving (Show,  Generic)
 
-
-instance ToJSON SortOrder
-
+instance ToJSON SortOrder where
+    toJSON = A.genericToJSON A.defaultOptions
 
 -- parse a json field and take the head of the list.
 --
