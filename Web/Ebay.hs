@@ -45,6 +45,7 @@ module Web.Ebay
 
 
 import qualified Data.Aeson                 as A
+import qualified Data.Aeson.Types           as A
 import qualified Data.ByteString.Lazy.Char8 as L
 import qualified Data.HashMap.Strict        as HM
 import qualified Data.Text                  as T
