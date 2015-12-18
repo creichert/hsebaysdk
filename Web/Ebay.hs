@@ -487,8 +487,9 @@ data FindVerb = FindCompletedItems -- Retrieves items whose listings
 simpleSearchWithVerb :: EbayConfig
                      -> SearchRequest
                      -> IO (Maybe SearchResponse)
-simpleSearchWithVerb cfg (SearchRequest fv s)  =
-  withManager defaultManagerSettings $ searchWithVerb cfg fv s
+simpleSearchWithVerb cfg (SearchRequest fv s)  = do
+    man <- newManager defaultManagerSettings
+    searchWithVerb cfg fv s man
 
 
 -- | Runs an eBay Finding API search
