@@ -1,3 +1,7 @@
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
+
 -- |
 -- Module      : Api
 -- Copyright   : (c) Christopher Reichert, 2014
@@ -7,10 +11,6 @@
 -- Portability : GNU/Linux, FreeBSD
 --
 -- Haskell SDK for Ebay Finding API
-
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
 
 module Web.Ebay
     (
@@ -44,22 +44,23 @@ module Web.Ebay
     ) where
 
 
-import           Control.Applicative        (pure, (<$>), (<*>))
-import           Control.Monad              (mzero)
-import           Control.Monad.IO.Class     (MonadIO (liftIO))
-import           Data.Aeson                 as A
-import           Data.Aeson.Types           (Parser)
+import qualified Data.Aeson                 as A
 import qualified Data.ByteString.Lazy.Char8 as L
 import qualified Data.HashMap.Strict        as HM
-import           Data.Monoid                ((<>))
-import           Data.Text                  (Text)
 import qualified Data.Text                  as T
 import qualified Data.Text.Encoding         as T
-import           Data.Time                  (UTCTime)
-import           GHC.Generics               (Generic)
-import           Network.HTTP.Client        as HTTP
-import           Network.HTTP.Types         as HTTP (Header)
 
+import Control.Applicative        (pure, (<$>), (<*>))
+import Control.Monad              (mzero)
+import Control.Monad.IO.Class     (MonadIO (liftIO))
+import Data.Aeson                 (ToJSON(..),FromJSON (..), (.:), (.=), (.:?), object, Value(..))
+import Data.Aeson.Types           (Parser)
+import Data.Monoid                ((<>))
+import Data.Text                  (Text)
+import Data.Time                  (UTCTime)
+import GHC.Generics               (Generic)
+import Network.HTTP.Client        as HTTP
+import Network.HTTP.Types         as HTTP (Header)
 
 
 -- | Ebay api configuration.
