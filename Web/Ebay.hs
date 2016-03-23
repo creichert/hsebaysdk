@@ -39,6 +39,7 @@ module Web.Ebay
     , Condition (..)
     , ListingInfo (..)
     , OutputSelector (..)
+    , ProductId (..)
     , GalleryInfo (..)
     , AffiliateInfo(..)
     ) where
@@ -163,6 +164,19 @@ instance ToJSON OutputSelector where
 instance FromJSON OutputSelector
 
 
+data ProductId = EAN Int | ISBN Int | UPC Int | ReferenceId String deriving Show
+
+productIdToParams :: ProductId -> (String, String)
+productIdToParams (EAN ean) = ("EAN", show ean)
+productIdToParams (ISBN isbn) = ("ISBN", show isbn)
+productIdToParams (UPC upc) = ("UPC", show upc)
+productIdToParams (ReferenceId referenceId) = ("ReferenceID", referenceId)
+
+instance ToJSON ProductId where
+  toJSON productId = object ["@type" .= idType, "__value__" .= id]
+    where (idType, id) = productIdToParams productId
+
+
 -- | Generic search query for ebay api.
 data Search = Search
             { searchKeywords       :: !Text
@@ -170,6 +184,7 @@ data Search = Search
             , searchSortOrder      :: Maybe SortOrder
             , searchItemFilter     :: ![ItemFilter]
             , searchAffiliateInfo  :: Maybe AffiliateInfo
+            , searchProductId      :: Maybe ProductId
             } deriving Show
 
 
@@ -180,6 +195,7 @@ instance ToJSON Search where
                                    ++ ifilter searchItemFilter
                                    ++ oselector searchOutputSelector
                                    ++ affiliate searchAffiliateInfo
+                                   ++ productId searchProductId
       where order (Just so)     = ["sortOrder" .= so]
             order Nothing       = []
             -- item filter field should not be
@@ -190,6 +206,8 @@ instance ToJSON Search where
             oselector (Just os) = [ "outputSelector" .= os ]
             affiliate Nothing   = []
             affiliate (Just a)  = [ "affiliate" .= a ]
+            productId Nothing   = []
+            productId (Just a)  = [ "productId" .= a ]
 
 
 data AffiliateInfo = AffiliateInfo
