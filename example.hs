@@ -24,6 +24,7 @@ main = simpleSearchWithVerb config searchRequest
                     , searchSortOrder = Nothing
                     , searchItemFilter = [ ItemFilter ("Condition", condition) ]
                     , searchAffiliateInfo = Nothing
+                    , searchProductId = Nothing
                     }
 
     searchRequest = SearchRequest FindItemsByKeywords search
