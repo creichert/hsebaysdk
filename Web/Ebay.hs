@@ -164,7 +164,7 @@ instance ToJSON OutputSelector where
 instance FromJSON OutputSelector
 
 
-data ProductId = EAN Int | ISBN Int | UPC Int | ReferenceId String deriving Show
+data ProductId = EAN Integer | ISBN Integer | UPC Integer | ReferenceId String deriving Show
 
 productIdToParams :: ProductId -> (String, String)
 productIdToParams (EAN ean) = ("EAN", show ean)
