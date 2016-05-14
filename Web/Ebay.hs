@@ -173,8 +173,8 @@ productIdToParams (UPC upc) = ("UPC", show upc)
 productIdToParams (ReferenceId referenceId) = ("ReferenceID", referenceId)
 
 instance ToJSON ProductId where
-  toJSON productId = object ["@type" .= idType, "__value__" .= id]
-    where (idType, id) = productIdToParams productId
+  toJSON productId = object ["@type" .= idType, "__value__" .= id']
+    where (idType, id') = productIdToParams productId
 
 
 -- | Generic search query for ebay api.
