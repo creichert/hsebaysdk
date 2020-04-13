@@ -1,5 +1,5 @@
 name:                hsebaysdk
-version:             0.4.0.0
+version:             0.4.1.0
 copyright:           (c) 2014 Christopher Reichert
 synopsis:            Haskell eBay SDK
 homepage:            https://github.com/creichert/hsebaysdk
@@ -25,6 +25,7 @@ library
                 , aeson                >= 0.8
                 , bytestring
                 , http-client          >= 0.4
+                , http-client-tls
                 , http-types
                 , text                 >= 1.1
                 , time
