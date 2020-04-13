@@ -25,6 +25,7 @@ library
                 , aeson                >= 0.8
                 , bytestring
                 , http-client          >= 0.4
+                , http-client-tls
                 , http-types
                 , text                 >= 1.1
                 , time

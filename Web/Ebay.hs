@@ -52,17 +52,19 @@ import qualified Data.HashMap.Strict        as HM
 import qualified Data.Text                  as T
 import qualified Data.Text.Encoding         as T
 
-import Control.Applicative        (pure, (<$>), (<*>))
-import Control.Monad              (mzero)
-import Control.Monad.IO.Class     (MonadIO (liftIO))
-import Data.Aeson                 (ToJSON(..),FromJSON (..), (.:), (.=), (.:?), object, Value(..))
-import Data.Aeson.Types           (Parser)
-import Data.Monoid                ((<>))
-import Data.Text                  (Text)
-import Data.Time                  (UTCTime)
-import GHC.Generics               (Generic)
-import Network.HTTP.Client        as HTTP
-import Network.HTTP.Types         as HTTP (Header)
+import Control.Applicative     (pure, (<$>), (<*>))
+import Control.Monad           (mzero)
+import Control.Monad.IO.Class  (MonadIO (liftIO))
+import Data.Aeson              (FromJSON (..), ToJSON (..), Value (..), object,
+                                (.:), (.:?), (.=))
+import Data.Aeson.Types        (Parser)
+import Data.Monoid             ((<>))
+import Data.Text               (Text)
+import Data.Time               (UTCTime)
+import GHC.Generics            (Generic)
+import Network.HTTP.Client     as HTTP
+import Network.HTTP.Client.TLS as TLS
+import Network.HTTP.Types      as HTTP (Header)
 
 
 -- | Ebay api configuration.
@@ -507,7 +509,7 @@ simpleSearchWithVerb :: EbayConfig
                      -> SearchRequest
                      -> IO (Maybe SearchResponse)
 simpleSearchWithVerb cfg (SearchRequest fv s)  = do
-    man <- newManager defaultManagerSettings
+    man <- newManager TLS.tlsManagerSettings
     searchWithVerb cfg fv s man
 
 
